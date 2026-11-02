@@ -1,0 +1,21 @@
+# D1 (main detector): class-agnostic Faster R-CNN, ResNet-18 + FPN, ImageNet backbone only
+run_name: D1_agnostic
+data_root: data
+seed: 42
+agnostic: true          # every box = "animal"; the classifier names it
+min_size: 640           # use 512 if out of GPU memory
+max_size: 1066          # use 853 together with min_size 512
+trainable_layers: 3     # freeze conv1 + layer1
+epochs: 12
+milestones: [8, 11]     # lr x gamma after these epochs (0-indexed epoch >= m)
+gamma: 0.1
+batch_size: 4           # RTX 4060 Laptop 8 GB
+lr: 0.005               # 0.01 for batch 8
+momentum: 0.9
+weight_decay: 1.0e-4
+warmup_iters: 500
+warmup_factor: 0.001
+num_workers: 4
+amp: true
+eval_every: 1           # run val AP each N epochs
+limit_images: null      # set e.g. 200 for a smoke test / overfit check

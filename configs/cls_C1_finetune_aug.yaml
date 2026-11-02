@@ -1,0 +1,17 @@
+# C1 (main classifier): ImageNet init, fine-tune all layers, augmentation B
+run_name: C1_finetune_aug
+data_root: data
+seed: 42
+preproc: B              # A = no augmentation, B = crop/flip/brightness/contrast jitter
+pretrained: true        # ImageNet weights
+freeze_backbone: false  # true = linear probe (only fc trains)
+balanced_sampler: true
+epochs: 15
+batch_size: 128         # drop to 64 if out of GPU memory
+lr_backbone: 1.0e-4
+lr_head: 1.0e-3
+weight_decay: 1.0e-4
+warmup_epochs: 1
+label_smoothing: 0.1
+num_workers: 6
+amp: true

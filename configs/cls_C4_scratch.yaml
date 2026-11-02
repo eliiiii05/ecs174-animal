@@ -1,0 +1,17 @@
+# C4: random init (no pretraining), trained from scratch - the "untrained model" baseline
+run_name: C4_scratch
+data_root: data
+seed: 42
+preproc: B              # A = no augmentation, B = crop/flip/brightness/contrast jitter
+pretrained: false       # random init (no ImageNet weights)
+freeze_backbone: false  # true = linear probe (only fc trains)
+balanced_sampler: true
+epochs: 30
+batch_size: 128         # drop to 64 if out of GPU memory
+lr_backbone: 1.0e-3
+lr_head: 1.0e-3
+weight_decay: 1.0e-4
+warmup_epochs: 1
+label_smoothing: 0.1
+num_workers: 6
+amp: true
