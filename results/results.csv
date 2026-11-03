@@ -1,1 +1,17 @@
 run_id,model,train_config,eval_set,metric,value,date,git_commit
+C1_finetune_aug,resnet18,cls_C1_finetune_aug,val,accuracy,0.90425,2026-11-02 22:36,2b9b66e
+C1_finetune_aug,resnet18,cls_C1_finetune_aug,val,macro_f1,0.9016,2026-11-02 22:36,2b9b66e
+C1_finetune_aug,resnet18,cls_C1_finetune_aug,val,best_epoch,15.0,2026-11-02 22:36,2b9b66e
+C1_finetune_aug,resnet18,cls_C1_finetune_aug,val,train_minutes,15.20672,2026-11-02 22:36,2b9b66e
+C2_finetune_noaug,resnet18,cls_C2_finetune_noaug,val,accuracy,0.89744,2026-11-02 22:54,2b9b66e
+C2_finetune_noaug,resnet18,cls_C2_finetune_noaug,val,macro_f1,0.89293,2026-11-02 22:54,2b9b66e
+C2_finetune_noaug,resnet18,cls_C2_finetune_noaug,val,best_epoch,14.0,2026-11-02 22:54,2b9b66e
+C2_finetune_noaug,resnet18,cls_C2_finetune_noaug,val,train_minutes,16.69365,2026-11-02 22:54,2b9b66e
+C3_linear_probe,resnet18,cls_C3_linear_probe,val,accuracy,0.85955,2026-11-02 23:05,2b9b66e
+C3_linear_probe,resnet18,cls_C3_linear_probe,val,macro_f1,0.85588,2026-11-02 23:05,2b9b66e
+C3_linear_probe,resnet18,cls_C3_linear_probe,val,best_epoch,10.0,2026-11-02 23:05,2b9b66e
+C3_linear_probe,resnet18,cls_C3_linear_probe,val,train_minutes,8.81941,2026-11-02 23:05,2b9b66e
+C4_scratch,resnet18,cls_C4_scratch,val,accuracy,0.81012,2026-11-03 00:18,2b9b66e
+C4_scratch,resnet18,cls_C4_scratch,val,macro_f1,0.79945,2026-11-03 00:18,2b9b66e
+C4_scratch,resnet18,cls_C4_scratch,val,best_epoch,30.0,2026-11-03 00:18,2b9b66e
+C4_scratch,resnet18,cls_C4_scratch,val,train_minutes,69.77495,2026-11-03 00:18,2b9b66e
