@@ -1,6 +1,6 @@
 # data and model outputs (large, regenerate with the scripts)
-data/
-data_*/
+/data/
+/data_*/
 runs/
 *.pt
 *.pth
