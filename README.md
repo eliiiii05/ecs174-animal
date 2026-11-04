@@ -25,8 +25,7 @@ pip install -r requirements.txt
 python scripts/check_env.py
 ```
 
-Keep the repo and `data/` inside the WSL filesystem (`~/...`), not under `/mnt/c/`; reading images from the Windows drive is much slower.
-
+Keep the repo and `data/` inside the WSL filesystem (`~/...`), not under `/mnt/c/`.
 ## Smoke test (about 5 minutes, 300 images)
 
 Run this first to make sure every step works before the full runs.
@@ -50,17 +49,17 @@ Delete the debug rows from `results/results.csv` afterwards.
 python -m src.data.prepare_dataset
 python -m src.data.make_crops --data data
 
-# training process 1: classifiers (~15-30 min each)
+# training process 1: classifiers
 python -m src.train_classifier --config configs/cls_C1_finetune_aug.yaml
 python -m src.train_classifier --config configs/cls_C2_finetune_noaug.yaml
 python -m src.train_classifier --config configs/cls_C3_linear_probe.yaml
 python -m src.train_classifier --config configs/cls_C4_scratch.yaml
 
-# training process 2: detectors (~3-5 h each; add --resume to continue after an interruption)
+# training process 2: detectors
 python -m src.train_detector --config configs/det_D1_agnostic.yaml
 python -m src.train_detector --config configs/det_D2_10class.yaml
 
-# evaluation (test set, run once at the end)
+# evaluation
 python -m src.eval_classifier --ckpt runs/C1_finetune_aug/best.pt --split test     # repeat for C2-C4
 python -m src.clip_zeroshot --split test
 python -m src.eval_detector --ckpt runs/D1_agnostic/best.pt --split test
