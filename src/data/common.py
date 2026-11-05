@@ -27,6 +27,8 @@ def expand_box(x, y, w, h, img_w, img_h, margin=0.10):
     y0 = max(0.0, y - margin * h)
     x1 = min(float(img_w), x + w + margin * w)
     y1 = min(float(img_h), y + h + margin * h)
-    x0, y0 = int(round(x0)), int(round(y0))
+    # keep x0/y0 inside the image so the crop is never empty (a box hugging the right or
+    # bottom edge used to round to x0 == img_w and give a 0-pixel crop)
+    x0, y0 = min(int(round(x0)), img_w - 1), min(int(round(y0)), img_h - 1)
     x1, y1 = max(x0 + 1, int(round(x1))), max(y0 + 1, int(round(y1)))
     return x0, y0, min(x1, img_w), min(y1, img_h)

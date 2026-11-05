@@ -60,8 +60,10 @@ python -m src.train_detector --config configs/det_D1_agnostic.yaml
 python -m src.train_detector --config configs/det_D2_10class.yaml
 
 # evaluation
+bash scripts/run_test.sh    # runs every command below in order (about 1.5-2 h), then the summary tables and figures
 python -m src.eval_classifier --ckpt runs/C1_finetune_aug/best.pt --split test     # repeat for C2-C4
 python -m src.clip_zeroshot --split test
+python -m src.majority_baseline --split test
 python -m src.eval_detector --ckpt runs/D1_agnostic/best.pt --split test
 python -m src.eval_detector --ckpt runs/D2_10class/best.pt --split test
 python -m src.pipeline --det runs/D1_agnostic/best.pt --cls runs/C1_finetune_aug/best.pt --split test
@@ -74,6 +76,10 @@ python -m src.pipeline --det runs/D1_agnostic/best.pt --cls runs/C1_finetune_aug
 # demo on any photo
 python -m src.pipeline --det runs/D1_agnostic/best.pt --cls runs/C1_finetune_aug/best.pt \
     --image path/to/photo.jpg --out-image results/figures/demo.png
+
+# report tables and figures (run_test.sh also runs these at the end)
+python scripts/summarize_results.py   # -> results/summary.md, results/results_latest.csv
+python scripts/make_figures.py        # -> results/figures/*.png
 ```
 
 Any config value can be overridden from the command line with `--set key=value`.
@@ -94,8 +100,8 @@ splits/             the fixed train/val/test split (committed)
 src/data/           prepare_dataset, make_crops, datasets, transforms, corruptions
 src/models/         classifier.py (ResNet-18), detector.py (Faster R-CNN R18-FPN)
 src/                train_classifier, train_detector, eval_*, pipeline, clip_zeroshot
-scripts/            check_env.py
-notebooks/          EDA, error analysis, demo (see notebooks/README.md)
+scripts/            check_env.py, check_shards.sh, run_all.sh (training), run_test.sh (test),
+                    summarize_results.py, make_figures.py
 results/            results.csv (tracked), predictions/ (ignored), figures/
 runs/, data/        created locally, not tracked
 ```

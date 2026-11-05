@@ -38,7 +38,9 @@ def load_models(det_ckpt, cls_ckpt, device):
 def detect_and_classify(img: Image.Image, det, cls, eval_tf, device, score_thr=0.05, margin=0.10):
     """Returns a list of {bbox (xywh), category_id (1-10), score} for one PIL image."""
     out = det([TF.to_tensor(img).to(device)])[0]
-    keep = out["scores"] >= score_thr
+    b = out["boxes"]
+    # boxes under 1 px wide or tall cannot be cropped (and cannot match an animal at IoU 0.5)
+    keep = (out["scores"] >= score_thr) & (b[:, 2] - b[:, 0] >= 1) & (b[:, 3] - b[:, 1] >= 1)
     boxes, s_det = out["boxes"][keep].tolist(), out["scores"][keep].tolist()
     if not boxes:
         return []

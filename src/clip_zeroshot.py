@@ -21,11 +21,17 @@ TEMPLATES = ["a photo of a {}.", "a photo of the {} in the wild.", "a close-up p
 MODEL_NAME = "openai/clip-vit-base-patch32"
 
 
+def _embedding(out):
+    """transformers 4.x returns the projected embedding as a tensor; 5.x returns an
+    output object that holds it in .pooler_output."""
+    return out if isinstance(out, torch.Tensor) else out.pooler_output
+
+
 @torch.no_grad()
 def class_text_features(model, proc, device):
     texts = [t.format(c) for c in CLASSES for t in TEMPLATES]
     tok = proc(text=texts, return_tensors="pt", padding=True).to(device)
-    f = model.get_text_features(**tok)
+    f = _embedding(model.get_text_features(**tok))
     f = f / f.norm(dim=-1, keepdim=True)
     f = f.view(len(CLASSES), len(TEMPLATES), -1).mean(dim=1)  # prompt ensembling
     return f / f.norm(dim=-1, keepdim=True)
@@ -57,7 +63,7 @@ def main():
             imgs = [apply_corruption(Image.open(data / r["path"]).convert("RGB"), args.corruption,
                                      args.severity, seed=start + k) for k, r in enumerate(batch)]
             px = proc(images=imgs, return_tensors="pt").to(device)
-            img_f = model.get_image_features(**px)
+            img_f = _embedding(model.get_image_features(**px))
             img_f = img_f / img_f.norm(dim=-1, keepdim=True)
             y_pred += (img_f @ text_f.T).argmax(dim=-1).tolist()
             y_true += [int(r["label"]) for r in batch]
