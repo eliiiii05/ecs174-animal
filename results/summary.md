@@ -20,14 +20,14 @@ Logged time includes laptop sleep; est. = typical epoch time x epochs from `runs
 
 ## RQ1: pretraining and fine-tuning (test, ground-truth crops)
 
-| Model | accuracy | macro-F1 | acc. small | acc. medium | acc. large |
-| --- | --- | --- | --- | --- | --- |
-| ImageNet · all layers · aug | 0.787 | 0.816 | 0.479 | 0.782 | 0.925 |
-| ImageNet · all layers · no aug | 0.793 | 0.810 | 0.521 | 0.774 | 0.923 |
-| ImageNet · head only · aug | 0.766 | 0.790 | 0.534 | 0.711 | 0.897 |
-| Random init · all layers · aug | 0.724 | 0.737 | 0.526 | 0.699 | 0.824 |
-| CLIP zero-shot | 0.787 | 0.795 | 0.432 | 0.765 | 0.955 |
-| Majority class | 0.160 | 0.028 | 0.242 | 0.220 | 0.092 |
+| Model | accuracy | macro precision | macro recall | macro-F1 | acc. small | acc. medium | acc. large |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| ImageNet · all layers · aug | 0.787 | 0.826 | 0.815 | 0.816 | 0.479 | 0.782 | 0.925 |
+| ImageNet · all layers · no aug | 0.793 | 0.810 | 0.813 | 0.810 | 0.521 | 0.774 | 0.923 |
+| ImageNet · head only · aug | 0.766 | 0.794 | 0.789 | 0.790 | 0.534 | 0.711 | 0.897 |
+| Random init · all layers · aug | 0.724 | 0.736 | 0.740 | 0.737 | 0.526 | 0.699 | 0.824 |
+| CLIP zero-shot | 0.787 | 0.786 | 0.831 | 0.795 | 0.432 | 0.765 | 0.955 |
+| Majority class | 0.160 | 0.016 | 0.100 | 0.028 | 0.242 | 0.220 | 0.092 |
 
 Test keeps every box; train/val dropped boxes with a short side under 32 px, so the small bucket is unseen during training.
 

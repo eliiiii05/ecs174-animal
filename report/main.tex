@@ -1,0 +1,165 @@
+% ECS 174 final report: outline + result tables.
+% Build:   cd report && latexmk -pdf main.tex      (or upload the report/ folder to Overleaf)
+% Tables:  python scripts/make_latex_tables.py     (regenerates report/tables/*.tex from results/results.csv)
+% Gray [bracketed] text is outline guidance from \note{...}; replace it with your own writing.
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{threeparttable}
+\usepackage[section]{placeins}  % tables stay inside their own section
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage[hidelinks]{hyperref}
+
+\captionsetup[table]{skip=4pt}
+\newcommand{\note}[1]{\textcolor{gray}{\textit{[#1]}}}
+\newcommand{\cmark}{\checkmark}
+\newcommand{\xmark}{--}
+
+\title{Find, Crop, Classify: Detecting and Identifying Animals\\with an ImageNet-Pretrained ResNet-18}
+\author{Jiacheng Chen \and Justin Chan \and Fanyou Liu \and Becky Young}
+\date{ECS 174, Fall 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\note{4--6 sentences: task (locate and name every animal in a photo); approach (class-agnostic detector, then a crop
+classifier, both built on an ImageNet-pretrained ResNet-18); what was compared (pretraining, which layers train,
+augmentation, CLIP zero-shot, one-stage vs.\ two-stage, corruptions); the 2--3 headline numbers from
+Tables~\ref{tab:classification}, \ref{tab:two_stage} and \ref{tab:robustness}.}
+\end{abstract}
+
+\section{Introduction}
+\note{Problem and motivation: people and field researchers need to find and name animals in photos, often with
+several animals per image and poor lighting.}
+
+\note{Approach in one paragraph: a detector finds every animal, each box is cropped, and a classifier names it.}
+
+Research questions:
+\begin{itemize}
+  \item[RQ1] How much do ImageNet pretraining, the choice of layers to fine-tune, and augmentation help the crop
+             classifier, and how does it compare with a zero-shot CLIP model and a majority-class baseline?
+  \item[RQ2] How well does the detector find animals, especially small ones and several animals in one image?
+  \item[RQ3] Does the two-stage pipeline (detector + classifier) beat a single detector that predicts the 10 classes?
+  \item[RQ4] How robust are the models to low light, blur and low contrast?
+\end{itemize}
+
+\note{Contributions: 3--4 bullets.}
+
+\section{Related Work}
+\note{Image classification and transfer learning: ResNet~\cite{he2016deep} pretrained on ImageNet~\cite{deng2009imagenet}.}
+
+\note{Object detection: Faster R-CNN~\cite{ren2015faster}, FPN~\cite{lin2017feature}; COCO
+benchmark~\cite{lin2014microsoft}.}
+
+\note{Zero-shot recognition: CLIP~\cite{radford2021learning}.}
+
+\note{Robustness to common corruptions~\cite{hendrycks2019benchmarking}.}
+
+\section{Dataset}
+\label{sec:dataset}
+\note{Source: animal subset of COCO train2017~\cite{lin2014microsoft} published on Hugging
+Face~\cite{animaldataset}; 10 classes; class imbalance (bear is the rarest class).}
+
+\note{Split by image, 70/15/15, seed 42, stratified by the rarest class in each image; one fixed split file shared by
+all experiments (Table~\ref{tab:dataset}).}
+
+\note{Classifier crops: each ground-truth box expanded by 10\% per side, short side resized to 256 px; train/val drop
+boxes with a short side under 32 px, test keeps every box and is reported by COCO size bucket.}
+
+\note{Why only ImageNet weights: COCO-pretrained detection weights have already seen our test images.}
+
+\input{tables/dataset}
+
+\section{Method}
+\label{sec:method}
+\note{Figure: method diagram, image $\rightarrow$ detector $\rightarrow$ crops $\rightarrow$ classifier
+$\rightarrow$ labelled boxes, with the one-stage detector underneath for comparison.}
+
+\subsection{Crop classifier}
+\note{ResNet-18~\cite{he2016deep} with a new 512$\rightarrow$10 head. Variants form the combinations in
+Table~\ref{tab:classification}: ImageNet or random initialization; all layers or only the head trained; with or
+without augmentation (random resized crop at scale 0.6--1, horizontal flip, brightness and contrast jitter 0.4,
+saturation 0.2). Validation and test use resize 256 + center crop 224.}
+
+\subsection{Detectors}
+\note{Faster R-CNN~\cite{ren2015faster} with a ResNet-18 + FPN~\cite{lin2017feature} backbone initialized from
+ImageNet. Class-agnostic version (animal vs.\ background) for the two-stage pipeline; 10-class version as the
+one-stage comparison.}
+
+\subsection{Two-stage pipeline}
+\note{Detector boxes with score $\geq 0.05$; each box expanded by 10\% and cropped; the classifier assigns one class;
+final score = detection score $\times$ classifier confidence.}
+
+\subsection{Baselines}
+\note{CLIP ViT-B/32 zero-shot~\cite{radford2021learning} with three prompt templates averaged per class; majority
+class (always predicts the most frequent training class).}
+
+\section{Experimental Setup}
+\label{sec:setup}
+\note{Hyperparameters in Table~\ref{tab:setup}. Protocol: the checkpoint with the best validation score is
+evaluated once on the test set.}
+
+\note{Metrics: accuracy and macro precision / recall / F1 for classification; COCO AP, AP$_{50}$, AP by size for
+detection; recall and count accuracy on images with several animals. Corruption types similar to~\cite{hendrycks2019benchmarking},
+parameters under Table~\ref{tab:robustness}.}
+
+\input{tables/setup}
+
+\section{Results}
+\label{sec:results}
+
+\subsection{RQ1: Pretraining, fine-tuning and augmentation}
+\note{Ranking (Table~\ref{tab:classification}); size of the pretraining gain; full fine-tuning vs.\ head only;
+augmentation on clean images; CLIP without training; the drop from validation to test explained by small boxes
+(Table~\ref{tab:size}); hardest classes (Table~\ref{tab:perclass_f1}).}
+
+\input{tables/classification}
+\input{tables/size}
+\input{tables/perclass_f1}
+
+\subsection{RQ2: Detection, small objects and several animals}
+\note{AP by size (Table~\ref{tab:detection}); recall vs.\ count accuracy on images with several animals
+(Table~\ref{tab:multi_animal}).}
+
+\input{tables/detection}
+\input{tables/multi_animal}
+
+\subsection{RQ3: Two-stage vs.\ one-stage}
+\note{Which method wins and by how much; which classes lose most (Table~\ref{tab:two_stage}); both find animals
+equally well (Table~\ref{tab:multi_animal}), so the gap comes from classification.}
+
+\input{tables/two_stage}
+
+\subsection{RQ4: Robustness}
+\note{Which corruption hurts most; augmentation vs.\ no augmentation under each corruption; CLIP's behavior;
+blur hurts the two-stage pipeline much more than the classifier alone (Table~\ref{tab:robustness}).}
+
+\input{tables/robustness}
+
+\section{Error Analysis}
+\label{sec:errors}
+\note{Most confused class pairs; accuracy vs.\ box size; examples of confident mistakes and their causes; split of
+two-stage errors into missed animals, poor localization, wrong class and duplicates.}
+
+\section{Discussion and Limitations}
+\note{Why the two-stage pipeline loses (classifier never saw small boxes; one label per box); single training seed;
+hyperparameters not tuned; one laptop GPU; all images come from COCO.}
+
+\section{Conclusion}
+\note{Answer RQ1--RQ4 in one or two sentences each.}
+
+\section*{Team Contributions}
+\note{Who did what, one line per person (required by the course).}
+
+\FloatBarrier
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}

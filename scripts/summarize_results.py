@@ -104,10 +104,11 @@ def validation_section(latest, runs_dir):
 
 def test_sections(latest):
     out = ["## RQ1: pretraining and fine-tuning (test, ground-truth crops)", ""]
-    rows = [[name, f3(value(latest, run, "test", "accuracy")), f3(value(latest, run, "test", "macro_f1")),
+    rows = [[name, *(f3(value(latest, run, "test", m)) for m in ("accuracy", "macro_precision", "macro_recall", "macro_f1")),
              *(f3(value(latest, run, "test", f"accuracy_{b}")) for b in ("small", "medium", "large"))]
             for run, name in CLASSIFIERS]
-    out += [table(["Model", "accuracy", "macro-F1", "acc. small", "acc. medium", "acc. large"], rows), "",
+    out += [table(["Model", "accuracy", "macro precision", "macro recall", "macro-F1",
+                   "acc. small", "acc. medium", "acc. large"], rows), "",
             "Test keeps every box; train/val dropped boxes with a short side under 32 px, "
             "so the small bucket is unseen during training.", ""]
     models = CLASSIFIERS[:5]

@@ -67,6 +67,7 @@ fi
 if wants report; then
   step summary python scripts/summarize_results.py
   step figures python scripts/make_figures.py
+  step latex_tables python scripts/make_latex_tables.py
   if [ -n "${SYNC_DIR:-}" ]; then
     mkdir -p "$SYNC_DIR/figures"
     cp results/summary.md "$SYNC_DIR/" 2>/dev/null
