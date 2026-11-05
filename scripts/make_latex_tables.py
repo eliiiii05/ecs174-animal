@@ -73,12 +73,14 @@ def bold_best(matrix, axis="col", skip=()):
     return text
 
 
-def table(caption, label, colspec, header, body, note=None, small=False):
-    """A booktabs table; the note sits under it at the table's own width (threeparttable)."""
+def table(caption, label, colspec, header, body, note=None, small=False, pre=()):
+    """A booktabs table; the note sits under it at the table's own width (threeparttable).
+    `pre` holds extra lines placed before the tabular, e.g. a smaller font or column spacing."""
     lines = [r"\begin{table}[htbp]", r"\centering", rf"\caption{{{caption}}}", rf"\label{{{label}}}",
              r"\begin{threeparttable}"]
     if small:
         lines.append(r"\small")
+    lines += list(pre)
     lines += [rf"\begin{{tabular}}{{{colspec}}}", r"\toprule", *header, r"\midrule", *body,
               r"\bottomrule", r"\end{tabular}"]
     if note:
@@ -97,16 +99,21 @@ def dataset_table(stats_path):
         return (f"% {shown} not found: run python -m src.data.prepare_dataset, then this script again.\n"
                 r"\textit{Dataset table missing: run \texttt{scripts/make\_latex\_tables.py} after preparing the data.}" "\n")
     stats = json.loads(stats_path.read_text())
-    splits = ["train", "val", "test"]
-    body = [row(c, *(f"{stats[s]['per_class'].get(c, 0):,}" for s in splits)) for c in CLASSES]
-    body += [r"\midrule",
-             row("All boxes", *(f"{stats[s]['boxes']:,}" for s in splits)),
-             row("Images", *(f"{stats[s]['images']:,}" for s in splits))]
-    return table("Number of annotated boxes per class and split. The split is by image (70/15/15, seed 42), "
-                 "so no image appears in two splits.", "tab:dataset", "lrrr",
-                 [row("Class", "Train", "Val", "Test")], body,
-                 note="Counts are before the crop filter: classifier training and validation crops drop boxes "
-                      "whose short side is under 32 px; the test set keeps every box.")
+    splits = [("train", "Train"), ("val", "Val"), ("test", "Test")]
+    num = lambda x: f"{x:,}".replace(",", r"\,")  # noqa: E731  thin space as thousands separator
+    body = [row(name, *(num(stats[s]["per_class"].get(c, 0)) for c in CLASSES),
+                num(stats[s]["boxes"]), num(stats[s]["images"])) for s, name in splits]
+    body += [r"\midrule", row("Total", *(num(sum(stats[s]["per_class"].get(c, 0) for s, _ in splits)) for c in CLASSES),
+                               num(sum(stats[s]["boxes"] for s, _ in splits)),
+                               num(sum(stats[s]["images"] for s, _ in splits)))]
+    k = len(CLASSES)
+    header = [rf" & \multicolumn{{{k}}}{{c}}{{Boxes per class}} & \multicolumn{{2}}{{c}}{{Total}} \\",
+              rf"\cmidrule(lr){{2-{k + 1}}}\cmidrule(lr){{{k + 2}-{k + 3}}}",
+              row("Split", *CLASSES, "Boxes", "Images")]
+    return table("Annotated boxes per class and split, and images per split. The split is by image (70/15/15, "
+                 "seed 42). Counts are before the 32-px filter applied to classifier training and validation crops.",
+                 "tab:dataset", "l" + "r" * (len(CLASSES) + 2), header, body,
+                 pre=[r"\footnotesize", r"\setlength{\tabcolsep}{4pt}"])
 
 
 def setup_table(configs):

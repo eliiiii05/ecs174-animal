@@ -54,18 +54,26 @@ def git_commit() -> str:
 
 
 def append_results(run_id, model, train_config, eval_set, metrics: dict) -> None:
-    """Append one row per metric to results/results.csv (the single source of report numbers)."""
+    """Write one row per metric to results/results.csv (the single source of report numbers).
+    A row with the same (run_id, eval_set, metric) is replaced, so re-running an evaluation
+    updates its numbers instead of adding duplicate rows."""
     RESULTS_CSV.parent.mkdir(parents=True, exist_ok=True)
-    new_file = not RESULTS_CSV.exists() or RESULTS_CSV.stat().st_size == 0
+    rows = {}
+    if RESULTS_CSV.exists() and RESULTS_CSV.stat().st_size > 0:
+        with open(RESULTS_CSV, newline="") as f:
+            for r in csv.DictReader(f):
+                rows[(r["run_id"], r["eval_set"], r["metric"])] = r
     date, commit = datetime.now().strftime("%Y-%m-%d %H:%M"), git_commit()
-    with open(RESULTS_CSV, "a", newline="") as f:
+    for metric, value in metrics.items():
+        rows[(run_id, eval_set, metric)] = {"run_id": run_id, "model": model, "train_config": train_config,
+                                            "eval_set": eval_set, "metric": metric,
+                                            "value": round(float(value), 5), "date": date, "git_commit": commit}
+    tmp = RESULTS_CSV.with_suffix(".tmp")
+    with open(tmp, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=RESULT_FIELDS)
-        if new_file:
-            writer.writeheader()
-        for metric, value in metrics.items():
-            writer.writerow({"run_id": run_id, "model": model, "train_config": train_config,
-                             "eval_set": eval_set, "metric": metric,
-                             "value": round(float(value), 5), "date": date, "git_commit": commit})
+        writer.writeheader()
+        writer.writerows(rows.values())
+    tmp.replace(RESULTS_CSV)
 
 
 def save_json(obj, path) -> None:
