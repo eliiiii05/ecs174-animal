@@ -103,14 +103,13 @@ class (always predicts the most frequent training class).}
 
 \section{Experimental Setup}
 \label{sec:setup}
-\note{Hyperparameters in Table~\ref{tab:setup}. Protocol: the checkpoint with the best validation score is
-evaluated once on the test set.}
+\note{One short paragraph with the key settings: optimizers, learning rates, epochs, batch sizes, mixed precision,
+one RTX 4060 Laptop GPU (full list in Appendix Table~\ref{tab:setup}). Protocol: the checkpoint with the best
+validation score is evaluated once on the test set.}
 
 \note{Metrics: accuracy and macro precision / recall / F1 for classification; COCO AP, AP$_{50}$, AP by size for
 detection; recall and count accuracy on images with several animals. Corruption types similar to~\cite{hendrycks2019benchmarking},
 parameters under Table~\ref{tab:robustness}.}
-
-\input{tables/setup}
 
 \section{Results}
 \label{sec:results}
@@ -118,11 +117,10 @@ parameters under Table~\ref{tab:robustness}.}
 \subsection{RQ1: Pretraining, fine-tuning and augmentation}
 \note{Ranking (Table~\ref{tab:classification}); size of the pretraining gain; full fine-tuning vs.\ head only;
 augmentation on clean images; CLIP without training; the drop from validation to test explained by small boxes
-(Table~\ref{tab:size}); hardest classes (Table~\ref{tab:perclass_f1}).}
+(Table~\ref{tab:size}); hardest classes (Appendix Table~\ref{tab:perclass_f1}).}
 
 \input{tables/classification}
 \input{tables/size}
-\input{tables/perclass_f1}
 
 \subsection{RQ2: Detection, small objects and several animals}
 \note{AP by size (Table~\ref{tab:detection}); recall vs.\ count accuracy on images with several animals
@@ -161,5 +159,11 @@ hyperparameters not tuned; one laptop GPU; all images come from COCO.}
 \FloatBarrier
 \bibliographystyle{plain}
 \bibliography{references}
+
+\clearpage
+\appendix
+\section{Additional Tables}
+\input{tables/setup}
+\input{tables/perclass_f1}
 
 \end{document}
