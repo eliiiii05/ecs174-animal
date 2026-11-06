@@ -2,10 +2,7 @@
 
     python -m src.train_detector --config configs/det_D1_agnostic.yaml
     python -m src.train_detector --config configs/det_D1_agnostic.yaml --resume
-    python -m src.train_detector --config configs/det_D1_agnostic.yaml \\
-        --set data_root=data_debug epochs=1 run_name=debug_D1 limit_images=200   # smoke test
 
-Writes runs/<run_name>/{best.pt,last.pt,log.csv}; best = highest val AP50.
 """
 import argparse
 import csv
@@ -13,7 +10,7 @@ import math
 import time
 
 import torch
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader
 
 from src.data.datasets import DetectionDataset, detection_collate
 from src.det_eval import coco_eval, load_gt, run_detector
@@ -53,8 +50,6 @@ def main():
                                 agnostic=agnostic, train=True)
     val_ds = DetectionDataset(data / "annotations" / "instances_val.json", data / "images",
                               agnostic=agnostic, train=False)
-    if cfg.get("limit_images"):
-        train_ds = Subset(train_ds, range(min(cfg["limit_images"], len(train_ds))))
     val_gt = load_gt(data / "annotations" / "instances_val.json", agnostic=agnostic)
     loader = DataLoader(train_ds, batch_size=cfg["batch_size"], shuffle=True, num_workers=cfg["num_workers"],
                         collate_fn=detection_collate, persistent_workers=cfg["num_workers"] > 0)

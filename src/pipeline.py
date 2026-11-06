@@ -1,4 +1,4 @@
-"""Two-stage inference: detector D1 finds animals -> crop each box -> classifier C1 names it.
+"""Detector + classifier inference: detector D1 finds animals -> crop each box -> classifier C1 names it.
 
 Evaluate on a split (10-class mAP, comparable with D2):
     python -m src.pipeline --det runs/D1_agnostic/best.pt --cls runs/C1_finetune_aug/best.pt --split test
@@ -25,7 +25,7 @@ from src.utils import REPO_ROOT, append_results, load_json, resolve, save_json
 def load_models(det_ckpt, cls_ckpt, device):
     dk = torch.load(resolve(det_ckpt), map_location=device, weights_only=False)
     dcfg = dk["config"]
-    assert dcfg["agnostic"], "the two-stage pipeline expects the class-agnostic detector (D1)"
+    assert dcfg["agnostic"], "the pipeline expects the class-agnostic detector (D1)"
     det = build_detector(2, dcfg["min_size"], dcfg["max_size"], dcfg["trainable_layers"], pretrained_backbone=False)
     det.load_state_dict(dk["model"])
     ck = torch.load(resolve(cls_ckpt), map_location=device, weights_only=False)
@@ -61,6 +61,7 @@ def draw(img, dets, path, min_score=0.5):
         x, y, w, h = r["bbox"]
         d.rectangle([x, y, x + w, y + h], outline=(255, 64, 64), width=3)
         d.text((x + 3, y + 3), f"{CLASSES[r['category_id'] - 1]} {r['score']:.2f}", fill=(255, 255, 0))
+    path.parent.mkdir(parents=True, exist_ok=True)
     img.save(path)
 
 

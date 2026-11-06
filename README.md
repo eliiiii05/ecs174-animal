@@ -1,107 +1,54 @@
-# ECS 174 Final Project: Find, Crop, Classify
 
-Two-stage animal detection and identification on the COCO animal subset
-([nirmalendu01/animal_dataset](https://huggingface.co/datasets/nirmalendu01/animal_dataset), 10 classes, ~24k images).
+# ECS 174 Final Project: Animal Detection and Identification
 
-1. **Detector (D1)**: Faster R-CNN with an ImageNet-pretrained ResNet-18 + FPN backbone, class-agnostic ("animal" vs background).
-2. **Classifier (C1)**: ImageNet-pretrained ResNet-18 fine-tuned on single-animal crops (10 classes).
-3. **Pipeline**: D1 boxes every animal → each box is cropped → C1 names it.
+Find every animal in a photo and name it with an ImageNet-pretrained ResNet-18.
+Data: the animal subset of COCO train2017
+([nirmalendu01/animal_dataset](https://huggingface.co/datasets/nirmalendu01/animal_dataset)), 10 classes, ~24k images.
 
-Baselines: C2 (no augmentation), C3 (linear probe), C4 (random init), CLIP zero-shot, D2 (one detector that predicts 10 classes).
+Main method (detector + classifier): a Faster R-CNN detector (ResNet-18 + FPN) finds every animal, each box is cropped, and a ResNet-18 classifier names it. It is compared with a single Faster R-CNN that predicts the 10 classes directly, and with CLIP zero-shot and majority-class baselines. All backbones start from ImageNet weights.
+
+| Model                                                               | Config                                 |
+| ------------------------------------------------------------------- | -------------------------------------- |
+| Classifier: ImageNet · all layers · aug (used in the main method) | `configs/cls_C1_finetune_aug.yaml`   |
+| Classifier: ImageNet · all layers · no aug                        | `configs/cls_C2_finetune_noaug.yaml` |
+| Classifier: ImageNet · head only · aug                            | `configs/cls_C3_linear_probe.yaml`   |
+| Classifier: random init · all layers · aug                        | `configs/cls_C4_scratch.yaml`        |
+| Detector: animal vs. background (used in the main method)           | `configs/det_D1_agnostic.yaml`       |
+| Detector: 10 classes (comparison)                                   | `configs/det_D2_10class.yaml`        |
 
 Team: Jiacheng Chen, Justin Chan, Fanyou Liu, Becky Young.
 
 ## Setup (WSL2 + NVIDIA GPU)
 
 ```bash
-cd ~/ecs174-animal
 python3 -m venv .venv && source .venv/bin/activate
-pip install --upgrade pip
-# 1) PyTorch with CUDA: pick the command for your CUDA version at https://pytorch.org/get-started/locally/
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
-# 2) everything else
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128   # match your CUDA, see pytorch.org
 pip install -r requirements.txt
-# 3) check GPU and both models
 python scripts/check_env.py
 ```
 
-Keep the repo and `data/` inside the WSL filesystem (`~/...`), not under `/mnt/c/`.
-## Smoke test (about 5 minutes, 300 images)
+Keep the repo and `data/` in the WSL filesystem (`~/...`), not under `/mnt/c/`.
 
-Run this first to make sure every step works before the full runs.
-
-```bash
-python -m src.data.prepare_dataset --out data_debug --limit 300
-python -m src.data.make_crops --data data_debug
-python -m src.train_classifier --config configs/cls_C1_finetune_aug.yaml \
-    --set data_root=data_debug epochs=1 run_name=debug_C1 batch_size=32
-python -m src.train_detector --config configs/det_D1_agnostic.yaml \
-    --set data_root=data_debug epochs=1 run_name=debug_D1 limit_images=100
-```
-
-Delete the debug rows from `results/results.csv` afterwards.
-
-## Full run order
+## Reproduce
 
 ```bash
-# data (once). splits/split_seed42.json is created on the first run and committed;
-# later runs reuse it so everyone has the same split.
-python -m src.data.prepare_dataset
-python -m src.data.make_crops --data data
-
-# training process 1: classifiers
-python -m src.train_classifier --config configs/cls_C1_finetune_aug.yaml
-python -m src.train_classifier --config configs/cls_C2_finetune_noaug.yaml
-python -m src.train_classifier --config configs/cls_C3_linear_probe.yaml
-python -m src.train_classifier --config configs/cls_C4_scratch.yaml
-
-# training process 2: detectors
-python -m src.train_detector --config configs/det_D1_agnostic.yaml
-python -m src.train_detector --config configs/det_D2_10class.yaml
-
-# evaluation
-bash scripts/run_test.sh    # runs every command below in order (about 1.5-2 h), then the summary tables and figures
-python -m src.eval_classifier --ckpt runs/C1_finetune_aug/best.pt --split test     # repeat for C2-C4
-python -m src.clip_zeroshot --split test
-python -m src.majority_baseline --split test
-python -m src.eval_detector --ckpt runs/D1_agnostic/best.pt --split test
-python -m src.eval_detector --ckpt runs/D2_10class/best.pt --split test
-python -m src.pipeline --det runs/D1_agnostic/best.pt --cls runs/C1_finetune_aug/best.pt --split test
-
-# robustness (E5): corruption in {lowlight, blur, contrast}, severity in {1, 2}
-python -m src.eval_classifier --ckpt runs/C1_finetune_aug/best.pt --corruption lowlight --severity 2
-python -m src.clip_zeroshot --corruption lowlight --severity 2
-python -m src.pipeline --det runs/D1_agnostic/best.pt --cls runs/C1_finetune_aug/best.pt --corruption lowlight --severity 2
-
-# demo on any photo
-python -m src.pipeline --det runs/D1_agnostic/best.pt --cls runs/C1_finetune_aug/best.pt \
-    --image path/to/photo.jpg --out-image results/figures/demo.png
-
-# report tables and figures (run_test.sh also runs these at the end)
-python scripts/summarize_results.py   # -> results/summary.md, results/results_latest.csv
-python scripts/make_figures.py        # -> results/figures/*.png
+python -m src.data.prepare_dataset          # download images, COCO annotations for the split in splits/
+python -m src.data.make_crops --data data   # classifier crops
+bash scripts/run_all.sh                     # train all six models -> runs/<name>/best.pt
+bash scripts/run_test.sh                    # evaluate on the test set -> results/results.csv
 ```
 
-Any config value can be overridden from the command line with `--set key=value`.
-If the detector runs out of GPU memory, use `--set min_size=512 max_size=853`.
+Train one model with `python -m src.train_classifier --config configs/<name>.yaml` (`src.train_detector` for
+detectors); `--resume` continues a run and `--set key=value` overrides a config value
 
-## Rules that keep results valid
-
-- Split by **image**, never by crop. Everyone uses `splits/split_seed42.json`.
-- **Never** use COCO-pretrained detection weights: the test images come from COCO train2017. Only ImageNet backbone weights.
-- Tune on `val`; run `test` once at the end.
-- Every number in the report comes from `results/results.csv`.
 
 ## Layout
 
 ```
-configs/            one YAML per experiment (C1-C4, D1, D2)
-splits/             the fixed train/val/test split (committed)
-src/data/           prepare_dataset, make_crops, datasets, transforms, corruptions
-src/models/         classifier.py (ResNet-18), detector.py (Faster R-CNN R18-FPN)
-src/                train_classifier, train_detector, eval_*, pipeline, clip_zeroshot
-scripts/            check_env.py, check_shards.sh, run_all.sh (training), run_test.sh (test),
-                    summarize_results.py, make_figures.py
-results/            results.csv (tracked), predictions/ (ignored), figures/
-runs/, data/        created locally, not tracked
+configs/    one YAML per model
+splits/     the fixed train/val/test split
+src/        data preparation, models, training, evaluation, pipeline, baselines
+scripts/    check_env.py, run_all.sh (train), run_test.sh (evaluate)
+results/    results.csv with every metric; figures/ and predictions/ stay local
+report/     LaTeX source of the report
 ```

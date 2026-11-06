@@ -2,11 +2,6 @@
 
     python -m src.train_classifier --config configs/cls_C1_finetune_aug.yaml
     python -m src.train_classifier --config configs/cls_C1_finetune_aug.yaml --resume
-    python -m src.train_classifier --config configs/cls_C1_finetune_aug.yaml \\
-        --set data_root=data_debug epochs=1 run_name=debug_C1      # smoke test
-
-Writes runs/<run_name>/{best.pt,last.pt,log.csv} and appends the best
-validation scores to results/results.csv.
 """
 import argparse
 import csv

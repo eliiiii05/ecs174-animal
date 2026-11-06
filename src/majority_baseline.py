@@ -2,7 +2,6 @@
 
     python -m src.majority_baseline --split test
 
-The floor every classifier has to beat. Appends metrics to results/results.csv.
 """
 import argparse
 import csv

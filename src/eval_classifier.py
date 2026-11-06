@@ -3,8 +3,6 @@
     python -m src.eval_classifier --ckpt runs/C1_finetune_aug/best.pt --split test
     python -m src.eval_classifier --ckpt runs/C1_finetune_aug/best.pt --corruption lowlight --severity 2
 
-Saves per-crop predictions to results/predictions/, a confusion matrix to
-results/figures/ (clean data only), and appends metrics to results/results.csv.
 """
 import argparse
 import csv
@@ -17,7 +15,7 @@ from src.data.corruptions import KINDS
 from src.data.datasets import CropDataset
 from src.data.transforms import build_crop_transform
 from src.engine import get_device, predict_classifier
-from src.metrics import accuracy_by_bucket, classification_metrics, plot_confusion
+from src.metrics import accuracy_by_bucket, classification_metrics
 from src.models.classifier import build_classifier
 from src.utils import REPO_ROOT, append_results, resolve
 
@@ -60,9 +58,6 @@ def main():
             r = ds.rows[i]
             w.writerow([r["ann_id"], r["image_id"], r["path"], y_true[k], y_pred[k],
                         round(float(probs[k].max()), 4), r["size_bucket"]])
-    if args.corruption == "none":
-        plot_confusion(y_true, y_pred, REPO_ROOT / "results" / "figures" / f"confusion_{tag}.png",
-                       title=f"{cfg['run_name']} on {eval_set}")
 
     append_results(cfg["run_name"], "resnet18", cfg["_config_file"], eval_set, metrics)
     print(f"{tag}: accuracy {metrics['accuracy']:.4f}, macro-F1 {metrics['macro_f1']:.4f}")

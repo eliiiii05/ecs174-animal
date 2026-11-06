@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-# 依次训练所有分类器和检测器，每个模型的输出存到 logs/
-cd ~/ecs174-animal
+cd "$(dirname "$0")/.." || exit 1
 source .venv/bin/activate
 mkdir -p logs
 
-run() {  # $1 = 训练模块, $2 = 配置文件
+run() {
   name=$(basename "$2" .yaml)
   echo "=== $(date '+%m-%d %H:%M') start $name ===" | tee -a logs/run_all.log
   python -m "$1" --config "$2" 2>&1 | tee "logs/$name.log"

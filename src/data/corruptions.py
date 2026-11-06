@@ -1,4 +1,4 @@
-"""Image corruptions for the robustness tests (RQ4). Deterministic given a seed."""
+"""Image corruptions for the robustness tests (RQ4)."""
 import numpy as np
 from PIL import Image, ImageEnhance, ImageFilter
 

@@ -1,13 +1,11 @@
 # Install PyTorch FIRST with the CUDA build from https://pytorch.org/get-started/locally/
 #   e.g. pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
 # then: pip install -r requirements.txt
-datasets>=2.19
+huggingface_hub
+pyarrow
 pycocotools>=2.0.7
 pyyaml>=6.0
 numpy
 pillow
 scikit-learn
-matplotlib
-pandas
-tqdm
 transformers>=4.40   # CLIP baseline only

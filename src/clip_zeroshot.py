@@ -3,7 +3,6 @@
     python -m src.clip_zeroshot --split test
     python -m src.clip_zeroshot --split test --corruption lowlight --severity 2
 
-Runs fine on free Colab. Appends metrics to results/results.csv.
 """
 import argparse
 import csv

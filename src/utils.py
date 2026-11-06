@@ -21,7 +21,7 @@ def resolve(path) -> Path:
 
 
 def load_config(path, overrides=None) -> dict:
-    """Load a YAML config. `overrides` is a list like ["epochs=1", "data_root=data_debug"]."""
+    """Load a YAML config. `overrides` is a list like ["epochs=1", "batch_size=64"]."""
     with open(path) as f:
         cfg = yaml.safe_load(f)
     for item in overrides or []:
@@ -54,9 +54,7 @@ def git_commit() -> str:
 
 
 def append_results(run_id, model, train_config, eval_set, metrics: dict) -> None:
-    """Write one row per metric to results/results.csv (the single source of report numbers).
-    A row with the same (run_id, eval_set, metric) is replaced, so re-running an evaluation
-    updates its numbers instead of adding duplicate rows."""
+
     RESULTS_CSV.parent.mkdir(parents=True, exist_ok=True)
     rows = {}
     if RESULTS_CSV.exists() and RESULTS_CSV.stat().st_size > 0:

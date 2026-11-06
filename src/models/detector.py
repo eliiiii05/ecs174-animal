@@ -1,7 +1,5 @@
 """Faster R-CNN with an ImageNet-pretrained ResNet-18 + FPN backbone.
 
-Never load COCO-pretrained detection weights: our test images come from COCO
-train2017, so those weights have already seen them.
 """
 from torchvision.models import ResNet18_Weights
 from torchvision.models.detection import FasterRCNN

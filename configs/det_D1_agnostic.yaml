@@ -18,4 +18,3 @@ warmup_factor: 0.001
 num_workers: 4
 amp: true
 eval_every: 1           # run val AP each N epochs
-limit_images: null      # set e.g. 200 for a smoke test / overfit check

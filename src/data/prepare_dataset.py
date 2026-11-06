@@ -1,17 +1,13 @@
-"""Step 1: read the Hugging Face dataset (downloading it once if needed), save JPEGs,
+"""Step 1: read and download the Hugging Face dataset, save JPEGs,
 make the fixed split, and write one COCO-format annotation file per split.
 
-The parquet shards are read directly from the Hugging Face cache, so no second
-~12 GB Arrow copy is written. Images stored as PNG are re-encoded as JPEG.
-
     python -m src.data.prepare_dataset                      # full dataset -> data/
-    python -m src.data.prepare_dataset --out data_debug --limit 300   # quick smoke test
 
 Outputs:
     <out>/images/<file_name>.jpg
     <out>/annotations/instances_{train,val,test}.json
     <out>/stats.json
-    splits/split_seed42.json   (committed to git; everyone reuses it)
+    splits/split_seed42.json
 """
 import argparse
 import io
@@ -73,7 +69,7 @@ def _expected_total(shards):
     return int(m.group(1)) if m else None
 
 
-def iter_parquet_rows(shards, limit: int | None):
+def iter_parquet_rows(shards):
     """Yield one dict per image, streaming through the shards in small batches (low memory)."""
     import pyarrow.parquet as pq
 
@@ -86,8 +82,6 @@ def iter_parquet_rows(shards, limit: int | None):
                 for ex in batch.to_pylist():
                     yield ex
                     n += 1
-                    if limit and n >= limit:
-                        return
         except OSError as e:
             raise SystemExit(
                 f"\nERROR: cannot read {shard.name}: {e}\n"
@@ -200,7 +194,6 @@ def main():
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--val-frac", type=float, default=0.15)
     ap.add_argument("--test-frac", type=float, default=0.15)
-    ap.add_argument("--limit", type=int, default=None, help="only use the first N images (smoke test)")
     ap.add_argument("--split-file", default=None, help="default: splits/split_seed<seed>.json")
     ap.add_argument("--parquet-dir", default=None,
                     help="folder that holds images/*.parquet (default: find it in the Hugging Face cache)")
@@ -209,19 +202,17 @@ def main():
     out = resolve(args.out)
     if args.split_file:
         split_path = resolve(args.split_file)
-    elif args.limit:
-        split_path = REPO_ROOT / "splits" / f"debug_split_seed{args.seed}_limit{args.limit}.json"
     else:
         split_path = REPO_ROOT / "splits" / f"split_seed{args.seed}.json"
 
     out.mkdir(parents=True, exist_ok=True)
     free_gb = shutil.disk_usage(out).free / 1024 ** 3
     print(f"Free disk space at {out}: {free_gb:.1f} GB")
-    if free_gb < 8 and not args.limit:
+    if free_gb < 8:
         print("WARNING: less than 8 GB free; the full image export needs about 5-6 GB")
 
     shards = find_parquet_shards(HF_DATASET, args.parquet_dir)
-    records, dropped = save_images_and_collect(iter_parquet_rows(shards, args.limit), out / "images")
+    records, dropped = save_images_and_collect(iter_parquet_rows(shards), out / "images")
     print(f"{len(records)} images with boxes kept, {dropped} boxes dropped (degenerate or unknown class)")
 
     if split_path.exists():
